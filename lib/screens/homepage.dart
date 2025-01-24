@@ -1,8 +1,4 @@
-import 'package:chat_roomapp/screens/hostpage.dart';
-import 'package:chat_roomapp/screens/userpage.dart';
 import 'package:flutter/material.dart';
-
-
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> saveUserRole(String role) async {
@@ -16,15 +15,4 @@ Future<void> clearUserRole() async{
   await prefs.remove('userRole');
 }
 
-// void checkUserRole(BuildContext context) async{
-//   final role=await getUserRole();
-//   if (role == 'host') {
-//     Navigator.pushReplacementNamed(context, '/registerScreen');
-//   }
-//   else if(role=='user'){
-//     Navigator.pushReplacementNamed(context, '/SessionsPage');
-//   }
-//   else{
-//     print("No role found");
-//   }
-// }
+

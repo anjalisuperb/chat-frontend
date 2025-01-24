@@ -1,8 +1,6 @@
 import 'package:chat_roomapp/pages/userrole.dart';
-import 'package:chat_roomapp/screens/sessions_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../pages/userrole.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
