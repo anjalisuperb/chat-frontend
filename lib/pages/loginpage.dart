@@ -111,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                       validator: (value) =>
                       value == null || value.isEmpty ? 'Enter email' : null,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
                     TextFormField(
                       controller: _passwordController,
                       focusNode: _passwordFocusNode,
