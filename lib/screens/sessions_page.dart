@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 
-void main(){runApp(SessionsPage());}
-
 class SessionsPage extends StatefulWidget {
   const SessionsPage({super.key});
 
@@ -56,8 +54,7 @@ class _SessionsPageState extends State<SessionsPage> {
   }
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           leadingWidth: 70,
           leading: InkWell(
@@ -77,7 +74,6 @@ class _SessionsPageState extends State<SessionsPage> {
               return SessionBox(sessions: sessions[index],users: users[index]);
             },
           ),
-      ),
     );
   }
 }
