@@ -1,7 +1,10 @@
+import 'package:chat_roomapp/apimodel/getAllUsers.dart';
 import 'package:flutter/material.dart';
 
 class SessionBox extends StatefulWidget {
-  const SessionBox({super.key});
+  final AllUsers users;
+  final AllSessions sessions;
+  const SessionBox({super.key,required this.sessions,required this.users});
 
   @override
   State<SessionBox> createState() => _SessionBoxState();
@@ -23,8 +26,9 @@ class _SessionBoxState extends State<SessionBox> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("Host name",style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,fontFamily: "Roboto"),),
-                      Text("host id:386h328", style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.normal,fontFamily: "Roboto"),),
+                      Text("${widget.users.username}",style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,fontFamily: "Roboto"),),
+                      Text("Session Id: ${widget.sessions.id}",style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,fontFamily: "Roboto"),),
+                      Text("Host Id: ${widget.sessions.hostid}", style: TextStyle(fontSize: 18, color: Colors.grey, fontWeight: FontWeight.normal,fontFamily: "Roboto"),),
                       SizedBox(height: 50,),
                       SizedBox(
                         height: 50,

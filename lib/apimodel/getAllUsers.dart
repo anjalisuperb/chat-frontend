@@ -27,5 +27,22 @@ class AllUsers{
 
     );
   }
+}
 
+//fetch all session
+class AllSessions{
+  final String id;
+  final String hostid;
+  final String status;
+
+  AllSessions({
+    required this.id,
+    required this.hostid,
+    required this.status});
+
+  factory AllSessions.fromJson(Map<String, dynamic> json){
+    return AllSessions(id: json['_id'] ?? '',
+        hostid: json['hostId'] ?? '',
+        status: json['status'] ?? '');
+  }
 }
