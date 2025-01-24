@@ -109,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) =>
-                      value == null || value.isEmpty ? 'Enter email' : null,
+                      value == null || value.isEmpty ? 'Enter Your email' : null,
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
