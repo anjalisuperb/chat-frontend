@@ -1,7 +1,6 @@
 import 'package:chat_roomapp/pages/loginpage.dart';
 import 'package:chat_roomapp/pages/userrole.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HostLogin extends StatefulWidget {
   const HostLogin({super.key});
@@ -11,34 +10,10 @@ class HostLogin extends StatefulWidget {
 }
 
 class _HostLoginState extends State<HostLogin> {
-  final GlobalKey<FormState> _formkey=GlobalKey<FormState>();
-  var emailController=TextEditingController();
-  var passwordController=TextEditingController();
+  // final GlobalKey<FormState> _formkey=GlobalKey<FormState>();
+  // var emailController=TextEditingController();
+  // var passwordController=TextEditingController();
 
-  void onclick() async{
-    SharedPreferences prefs=await SharedPreferences.getInstance();
-    prefs.setString('email', emailController.text.toString());
-    prefs.setString("password", passwordController.text.toString());
-  }
-  void onSubmit(){
-    if(_formkey.currentState!.validate()){
-      ScaffoldMessenger.of(_formkey.currentContext!).showSnackBar(
-          const SnackBar(content: Text("login successfully"))
-      );
-    }
-  }
-  String? _validateEmail(value){
-    if(value!.isEmpty){
-      return "Please enter username";
-    }
-    return null;
-  }
-  String? _validatePassword(value){
-    if(value!.isEmpty){
-      return "please enter password";
-    }
-    return null;
-  }
   @override
   Widget build(BuildContext context) {
     saveUserRole('host');

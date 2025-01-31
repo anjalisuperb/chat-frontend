@@ -4,7 +4,6 @@ import 'package:chat_roomapp/pages/userrole.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
-
 class SessionsPage extends StatefulWidget {
   const SessionsPage({super.key});
 
@@ -25,12 +24,18 @@ class _SessionsPageState extends State<SessionsPage> {
   Future<void> fetchAllUsers() async{
     final response = await http.get(Uri.parse("https://scalable-chat-app-qcq3.onrender.com/api/user/"));
 
-
     if (response.statusCode == 200) {
-      List<dynamic> jsonData = convert.json.decode(response.body);
+      // print(response.body);
+      Map<String, dynamic> jsonData = convert.json.decode(response.body);
+      if(jsonData.containsKey("users")){
+        List<dynamic> userlist=jsonData["users"];
       setState(() {
-        users = jsonData.map((data) => AllUsers.fromJson(data)).toList();
-      });
+        users.clear();
+        users.addAll(userlist.map((data) => AllUsers.fromJson(data)));
+      });}
+      else{
+        print("Error: 'users' key not found in response");
+      }
     } else {
       print("Error in fetching data!");
     }
@@ -38,18 +43,20 @@ class _SessionsPageState extends State<SessionsPage> {
 
   Future<void> fetchAllSessions() async{
     final response = await http.get(Uri.parse("https://scalable-chat-app-qcq3.onrender.com/api/chatSession/"));
-
-
     if (response.statusCode == 200) {
-      List<dynamic> jsonData = convert.json.decode(response.body);
-      setState(() {
-        sessions = jsonData.map<AllSessions>((data) => AllSessions.fromJson(data)).toList();
-      });
-    } else if(response.statusCode==500){
-      print('server error');
-    }
-    else {
-      print("Error in fetching data!");
+      // print(response.body);
+      Map<String,dynamic> jsonData = convert.json.decode(response.body);
+      if(jsonData.containsKey("sessions")){
+        List<dynamic> sessionList=jsonData["sessions"];
+        setState(() {
+        sessions.clear();
+        sessions.addAll(sessionList.map((data) => AllSessions.fromJson(data)));
+      });}
+      else{
+        print("Error: 'sessions' key not found in response");
+      }
+    }else {
+      print("Error in fetching data! Status Code: ${response.statusCode}");
     }
   }
   @override
@@ -71,7 +78,8 @@ class _SessionsPageState extends State<SessionsPage> {
           body: ListView.builder(
             itemCount: sessions.length,
             itemBuilder: (context, index) {
-              return SessionBox(sessions: sessions[index],users: users[index]);
+              return SessionBox(sessions: sessions[index],users: index < users.length ? users[index] : AllUsers.defaultUser()
+              );
             },
           ),
     );

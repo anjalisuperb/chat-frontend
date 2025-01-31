@@ -1,3 +1,4 @@
+import 'package:chat_roomapp/apimodel/getAllUsers.dart';
 import 'package:chat_roomapp/screens/createsession.dart';
 import 'package:chat_roomapp/screens/homepage.dart';
 import 'package:chat_roomapp/screens/hostpage.dart';
@@ -5,7 +6,6 @@ import 'package:chat_roomapp/screens/registerpage.dart';
 import 'package:chat_roomapp/screens/sessions_page.dart';
 import 'package:chat_roomapp/screens/userpage.dart';
 import 'package:flutter/material.dart';
-
 
 void main(){
   runApp(ChatApp());
@@ -22,9 +22,10 @@ class ChatApp extends StatelessWidget {
         '/hostScreen': (context) => HostLogin(),
         '/userScreen': (context) => UserLogin(),
         '/registerScreen': (context) => RegisterPage(),
-        '/createSession': (context) => CreateSession(),
+        '/createSession': (context) => CreateSession(sessions: AllSessions(id: "", hostid: "", status: "",),
+          users: AllUsers(id: "", username: "", email: "", password: "", role: "", status: ""),),
         '/sessionScreen': (context) => SessionsPage(),
-        
+
       },
     );
   }

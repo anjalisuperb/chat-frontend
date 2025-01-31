@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -14,7 +14,8 @@ class _LoginPageState extends State<LoginPage> {
   var emailController=TextEditingController();
   var passwordController=TextEditingController();
   bool isLoading=false;
-  Future<void> onSubmit() async {
+  Future<void> onSubmit(String host_id) async {
+    print("Host id: $host_id");
     if (_formkey.currentState!.validate()) {
       setState(() {
         isLoading = true;
@@ -32,17 +33,27 @@ class _LoginPageState extends State<LoginPage> {
           headers: {'Content-Type': 'application/json'},
           body: body,
         );
+        // print(response.body);
 
         if (response.statusCode == 200) {
-
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Logged in successfully!')),
           );
-          SharedPreferences prefs=await SharedPreferences.getInstance();
-          prefs.setString('email', emailController.text.toString());
-          prefs.setString('password', passwordController.text.toString());
-
-          Future.delayed(Duration(milliseconds: 300), () {
+          var responseData = jsonDecode(response.body);
+          var user = responseData['user'];
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('id', user['_id']);
+          prefs.setString('username', user['username']);
+          prefs.setString('email', user['email']);
+          prefs.setString('role', user['role']);
+          prefs.setString('status', user['status']);
+          var storeId = prefs.getString("id");
+          var storeUsername = prefs.getString("username");
+          var storeEmail = prefs.getString("email");
+          var storeRole = prefs.getString("role");
+          var storeStatus = prefs.getString("status");
+          print("Username:$storeUsername");
+          Future.delayed(Duration(milliseconds: 100), () {
             Navigator.pushNamed(context, '/createSession');
           });
         }
@@ -70,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
 
   String? _validateEmail(value){
     if(value!.isEmpty){
-      return "please enter username";
+      return "please enter email";
     }
     return null;
   }
@@ -117,14 +128,13 @@ class _LoginPageState extends State<LoginPage> {
               height: 50,
               width: 200,
               child: ElevatedButton(
-                onPressed: (){
-                  onSubmit();
-
+                onPressed: isLoading ? null : () {
+                  onSubmit("host_id");
                 },
                 style: ButtonStyle(
                   backgroundColor: WidgetStatePropertyAll<Color>(Colors.blue),
                 ),
-                child: Text("Login",
+                child: isLoading ? CircularProgressIndicator(color: Colors.white,):Text("Login",
                   style: TextStyle(color: Colors.white,fontSize: 20),),
               ),
             ),

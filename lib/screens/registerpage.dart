@@ -16,15 +16,6 @@ class _RegisterPageState extends State<RegisterPage> {
   var emailController=TextEditingController();
   var passwordController=TextEditingController();
 
-  void onclick() async{
-    SharedPreferences prefs=await SharedPreferences.getInstance();
-    prefs.setString('name', nameController.text.toString());
-    prefs.setString('email', emailController.text.toString());
-    prefs.setString("password", passwordController.text.toString());
-
-
-  }
-
   @override
   void initState() {
     super.initState();
@@ -37,11 +28,26 @@ class _RegisterPageState extends State<RegisterPage> {
       role = fetchedRole;
     });
   }
-  void onSubmit(){
+  void onSubmit() async{
     if(_formkey.currentState!.validate()){
       ScaffoldMessenger.of(_formkey.currentContext!).showSnackBar(
           const SnackBar(content: Text("register successfully"))
       );
+    }
+    SharedPreferences prefs=await SharedPreferences.getInstance();
+    prefs.setString('name', nameController.text.toString());
+    prefs.setString('email', emailController.text.toString());
+    prefs.setString("password", passwordController.text.toString());
+
+    getUserRole();
+    if(role=='user'){
+      Navigator.pushNamed(context, '/userScreen');
+    }
+    else if(role=='host'){
+      Navigator.pushReplacementNamed(context, '/hostScreen');
+    }
+    else{
+      print("No role found");
     }
   }
   String? _validatename(value){
@@ -130,21 +136,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: ElevatedButton(
                       onPressed: (){
                         onSubmit();
-                        onclick();
-                        getUserRole();
-
-                        if(role=='user'){
-
-                          Navigator.pushNamed(context, '/userScreen');
-                        }
-                        else if(role=='host'){
-
-                          Navigator.pushReplacementNamed(context, '/hostScreen');
-                        }
-                        else{
-                          print("No role found");
-                        }
-
                       },
                       style: ButtonStyle(
                         backgroundColor: WidgetStatePropertyAll<Color>(Colors.blue),
