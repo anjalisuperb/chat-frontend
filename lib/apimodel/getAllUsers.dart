@@ -58,25 +58,27 @@ class AllSessions{
   }
 }
 //fetch previous messages
-class PreviousMessages {
-  // final String message;
-  final String senderId;
-  final String content;
-  final String senderName;
-  final String createdAt;
-
-  PreviousMessages(
-      {required this.senderId,
-        required this.content,required this.senderName,required this.createdAt});
-
-  factory PreviousMessages.fromJson(Map<String, dynamic> json) {
-    // print("Raw JSON for PreviousMessages: $json"); // Debugging
-
-    return PreviousMessages(
-      senderId: json['sender']?['id']?.toString() ?? 'Unknown_Sender_ID',
-      senderName: json['sender']?['username'] ?? 'Unknown User',
-      content: json['content'] ?? '[No Content]',
-      createdAt: json['createdAt'] ?? DateTime.now().toIso8601String(),
-    );
-  }
-}
+// class PreviousMessages {
+//   // final String message;
+//   final String senderId;
+//   final String content;
+//   final String senderName;
+//   final String createdAt;
+//
+//   PreviousMessages(
+//       {required this.senderId,
+//         required this.content,
+//         required this.senderName,
+//         required this.createdAt});
+//
+//   factory PreviousMessages.fromJson(Map<String, dynamic> json) {
+//     // print("Raw JSON for PreviousMessages: $json"); // Debugging
+//
+//     return PreviousMessages(
+//       senderId: json['sender']?['id']?.toString() ?? 'Unknown_Sender_ID',
+//       senderName: json['sender']?['username'] ?? 'Unknown User',
+//       content: json['content'] ?? '[No Content]',
+//       createdAt: json['createdAt'] ?? DateTime.now().toIso8601String(),
+//     );
+//   }
+// }

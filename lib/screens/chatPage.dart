@@ -1,3 +1,4 @@
+import 'package:chat_roomapp/apimodel/PreviousMessageResponseModel.dart';
 import 'package:chat_roomapp/socketmodel/socketconnection.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import '../apimodel/getAllUsers.dart';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 import '../pages/userrole.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class ChatPage extends StatefulWidget {
   final AllSessions sessions;
@@ -18,15 +20,18 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  // late ScrollController scrollController;
-  late SocketService socketService;
+  // late IO.Socket socket;
+  final SocketService socketService=SocketService();
+  // List<Map<String, dynamic>> messages = [];
+
   bool showemoji = false;
   FocusNode focusNode = FocusNode();
   TextEditingController controller = TextEditingController();
-  List<PreviousMessages> messages = [];
+  List<Messages> messages = [];
   String username = "";
   String id = "";
   String? role;
+
 
   @override
   void initState() {
@@ -37,76 +42,59 @@ class _ChatPageState extends State<ChatPage> {
           showemoji = false;
         });
       }
-      // scrollController = ScrollController();
-      socketService=SocketService();
-      socketService.initSocket();
-      socketListener();
     });
+    // connectSocket();
+    setupSocket();
     fetchPreviousMessages(widget.sessions.id);
     loadUsername();
     loadid();
     fetchUserRole();
   }
+  void setupSocket(){
+    socketService.initSocket();
+    if(id.isNotEmpty){socketService.addNewUser(id);}
+    socketService.joinChatSession(widget.sessions.id);
+    socketService.listenToMessages((message){
+      if(mounted){
+        setState(() {
+          //messages.add(message);
+        });
+      }
+    });
+  }
+
   Future<void> fetchUserRole() async {
     String? fetchedRole = await getUserRole();
     setState(() {
       role = fetchedRole;
     });
   }
+
   Future<void> loadUsername() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       username = prefs.getString("username") ?? "";
     });
   }
+
   Future<void> loadid() async {
-    if(role=="host"){
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      setState(() {
-        id = prefs.getString("sessionid") ?? "";
-      });
-    }
-    else{
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      setState(() {
-        id = prefs.getString("id") ?? "";
-      });
-    }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      id = role == "host" ? prefs.getString("sessionid") ?? "" : prefs.getString("id") ?? "";
+    });
   }
 
   Future<void> fetchPreviousMessages(String sessionId) async {
     final url = Uri.parse("https://scalable-chat-app-qcq3.onrender.com/api/message/$sessionId");
-
     try {
       final response = await http.get(url);
-      print("Full API Response: ${response.body}");
-
       if (response.statusCode == 200) {
-        final Map<String, dynamic>? jsonData = convert.jsonDecode(response.body);
+        final Map<String, dynamic> jsonData = convert.jsonDecode(response.body);
+        var model = PreviousMessageModel.fromJson(jsonData);
+        setState(() {
+          messages = model.messages ?? [];
+        });
 
-        if (jsonData == null) {
-          print("Error: API returned null JSON.");
-          return;
-        }
-
-        if (jsonData.containsKey('messages') && jsonData['messages'] is List) {
-          setState(() {
-            messages = (jsonData['messages'] as List)
-                .map((msg) {
-              try {
-                return PreviousMessages.fromJson(msg);
-              } catch (e) {
-                print("Error parsing message: $e");
-                return null;
-              }
-            })
-                .whereType<PreviousMessages>()
-                .where((msg) => role != "host" || msg.senderId != id)
-                .toList();
-          });
-        } else {
-          print("Error: 'messages' key not found or is not a list.");
-        }
       } else {
         print("Failed to load messages: ${response.statusCode}");
       }
@@ -116,59 +104,14 @@ class _ChatPageState extends State<ChatPage> {
   }
 
 
-  // void scrollToBottom() {
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //     if (scrollController.hasClients) {
-  //       scrollController.animateTo(
-  //         scrollController.position.maxScrollExtent,
-  //         duration: Duration(milliseconds: 300),
-  //         curve: Curves.easeOut,
-  //       );
-  //     }
-  //   });
-  // }
-
-  void socketListener() {
-    socketService.socket.on('message', (data) {
-      print("Socket Data: $data");
-      if (mounted) {
-        setState(() {
-          messages.add(PreviousMessages(
-            senderId: data['senderId'],
-            senderName: data['senderName'],
-            content: data['content'],
-            createdAt: data['createdAt'],
-          ));
-        });
-        // scrollToBottom();
-      }
-    });
-    socketService.socket.on('userjoined',(data){
-      if(mounted){
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${data['username']} joined the chat")));
-      }
-    });
-    socketService.socket.on('userleft',(data){
-      if(mounted){
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${data['username']} left the chat")));
-      }
-    });
-    socketService.joinChatSession(widget.sessions.id);
-  }
-  void dispose() {
-    // scrollController.dispose();
-    socketService.leaveChatSession(widget.sessions.id);
-    super.dispose();
-  }
-
   void sendMessage() async {
     if (controller.text.trim().isEmpty) return;
     final messageContent = controller.text.trim();
-    socketService.sendMessage(widget.sessions.id, username, id, messageContent);
+    // socketService.sendMessage(widget.sessions.id, id, messageContent, username);
     final url = Uri.parse("https://scalable-chat-app-qcq3.onrender.com/api/message/${widget.sessions.id}");
     final body = convert.jsonEncode({
       'senderId': id,
-      'content': controller.text.trim(),
+      'content': messageContent,
     });
 
     try {
@@ -177,18 +120,33 @@ class _ChatPageState extends State<ChatPage> {
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
-      // print("Send Message Response: ${response.body}");
 
       if (response.statusCode == 201) {
+        Map<String, dynamic> messageData = {
+          'sender': {
+            'id': id,
+            'username': username,
+          },
+          'content': messageContent,
+          'createdAt': DateTime.now().toIso8601String(),
+        };
         setState(() {
-          messages.add(PreviousMessages(
-            content: controller.text.trim(),
-            senderId: id,
-            senderName: username,
+          var message = Messages(
+            content: messageData['content'] ?? "",
+            sender: Sender(id: id, name: username),
             createdAt: DateTime.now().toIso8601String(),
-          ));
+          );
+          print(message.content);
+          setState(() {
+            messages.add(message);
+          });
         });
-        // scrollToBottom();
+
+        // Send through socket for real-time update
+        socketService.sendMessage(
+          sessionId: widget.sessions.id,
+          message: messageData,
+        );
         controller.clear();
       } else if (response.statusCode == 404) {
         showSnackbar("Chat session not found!");
@@ -233,12 +191,11 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             Expanded(
               child: ListView.builder(
-                // controller: scrollController,
                 padding: EdgeInsets.all(10),
                 itemCount: messages.length,
                 itemBuilder: (context, index) {
-                  var message = messages[index];
-                  bool isCurrentUser = message.senderId == id;
+                  final message = messages[index];
+                  final isCurrentUser = message.sender?.id == id;
 
                   return Align(
                     alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -254,19 +211,19 @@ class _ChatPageState extends State<ChatPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            message.senderName,
+                            message.sender?.name ?? "",
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black),
                           ),
                           SizedBox(height: 5),
                           Text(
-                            message.content,
+                            message.content ?? "",
                             style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 5),
                           Align(
                             alignment: Alignment.bottomRight,
                             child: Text(
-                              formatDateTime(message.createdAt),
+                              formatDateTime(message.createdAt ?? ""),
                               style: TextStyle(fontSize: 12, color: Colors.black54),
                             ),
                           ),
@@ -277,48 +234,44 @@ class _ChatPageState extends State<ChatPage> {
                 },
               ),
             ),
-            if(role!="host")
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      focusNode.unfocus();
-                      setState(() => showemoji = !showemoji);
-                    },
-                    icon: Icon(Icons.emoji_emotions_outlined),
-                  ),
-
-                  Expanded(
-                    child: TextFormField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      keyboardType: TextInputType.multiline,
-                      maxLines: 5,
-                      minLines: 1,
-                      decoration: InputDecoration(border: InputBorder.none, hintText: "Write a message"),
+            if (role != "host")
+              Container(
+                color: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        focusNode.unfocus();
+                        setState(() => showemoji = !showemoji);
+                      },
+                      icon: Icon(Icons.emoji_emotions_outlined),
                     ),
-                  ),
-
-                  IconButton(
-                    onPressed: sendMessage,
-                    icon: Icon(Icons.send,color: Colors.blue,),
-                    // child: Text(
-                    //   "Send",
-                    //   style: TextStyle(color: Colors.teal[300], fontSize: 14, fontWeight: FontWeight.bold),
-                    // ),
-                  ),
-                ],
+                    Expanded(
+                      child: TextFormField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        onTap: (){
+                          focusNode.requestFocus();
+                        },
+                        keyboardType: TextInputType.multiline,
+                        maxLines: 5,
+                        minLines: 1,
+                        decoration: InputDecoration(border: InputBorder.none, hintText: "Write a message"),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: sendMessage,
+                      icon: Icon(Icons.send, color: Colors.blue),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            if(role!="host")
-            Offstage(
-              offstage: !showemoji,
-              child: SizedBox(height: 250, child: emojiSelect()),
-            ),
+            if (role != "host")
+              Offstage(
+                offstage: !showemoji,
+                child: SizedBox(height: 250, child: emojiSelect()),
+              ),
           ],
         ),
       ),
@@ -344,5 +297,10 @@ class _ChatPageState extends State<ChatPage> {
   String formatDateTime(String isoDate) {
     DateTime dateTime = DateTime.parse(isoDate).toLocal();
     return "${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}";
+  }
+  void dispose() {
+    socketService.leaveChatSession(widget.sessions.id);
+    socketService.dispose();
+    super.dispose();
   }
 }
